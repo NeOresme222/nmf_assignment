@@ -1,0 +1,79 @@
+topicmodeling
+=============
+
+## Overview -- Unsupervised learning: Finding important features (NMF)
+
+This sprint will use Non-Negative Matrix factorization (NMF) to discover topics from our NYT corpus.  Similar to kmeans and hierarchical clustering, NMF is a technique to help discover latent properties (features) in our data that a human might not have been able to see otherwise.
+
+## Goals
+
+* Matrix factorization
+* Dimensionality reduction
+* Latent properties
+* Linear combination of features
+
+import os
+import numpy as np
+import pandas as pd
+from numpy.linalg import svd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.cluster import KMeans
+from collections import Counter
+from scipy.spatial.distance import pdist, squareform
+import matplotlib.pyplot as plt
+from scipy.cluster.hierarchy import linkage, dendrogram
+
+df = pd.read_pickle('data/articles.pkl')
+content = df['content']
+
+vectorizer = TfidfVectorizer(max_features = 5000, stop_words = 'english')
+
+X = vectorizer.fit_transform(content)
+
+V = X.toarray()
+
+
+class NMF(V, k=2):
+
+    def __init__(self, V, W, H, k=2):
+        self.V = V
+        self.W = W
+        self.H = H
+    
+    
+    
+    
+def my_nmf(V, k=2, n_iter=10):
+    n,m = V.shape
+    W = np.random.rand(n,k)
+    for i in range(n_iter):
+        H, error = update_H(V,W,k)
+        W, error = update_W(V,H,k)
+    return W, error
+
+def update_H(V,W,k=2):
+    '''
+    inputs: V matrix of data n x m
+            W matrix of data n x k
+    
+    outputs: H matrix k x m 
+             error
+    '''
+    H = np.linalg.lstsq(W,V, rcond=None)[0]
+    H[H < 0] = 0
+    error = np.linalg.norm(V - np.dot(W,H))
+    return H, error
+
+def update_W(V,H,k=2):
+    '''
+    inputs: V matrix of data n x m
+            W matrix of data n x k
+    
+    outputs: H matrix k x m 
+             error
+    '''
+    W = np.linalg.lstsq(H.T, V.T, rcond=None)[0].T
+    W[W < 0] = 0
+    error = np.linalg.norm(V - np.dot(W,H))
+    return W, error
+    
